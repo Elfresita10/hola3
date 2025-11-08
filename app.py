@@ -1,63 +1,56 @@
 import streamlit as st
 import random
 import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.animation import FuncAnimation
 
-# Lista de 150 preguntas (solo algunas de ejemplo, puedes añadir más)
-questions = [
-    "¿Cuál es el color del cielo?",
-    "¿Cuántos continentes existen?",
-    "¿Cuál es la capital de Francia?",
-    "¿Quién escribió 'Cien años de soledad'?",
-    "¿Qué es la inteligencia artificial?",
-    "¿Cuándo fue la independencia de Venezuela?",
-    "¿Qué es un agujero negro?",
-    "¿Quién fue el primer presidente de los Estados Unidos?",
-    "¿Cuál es el río más largo del mundo?",
-    "¿Qué significa la palabra 'tecnología'?"
-    # Añadir más preguntas hasta llegar a 150
-]
+# Lista de opciones
+options = ["Opción 1", "Opción 2", "Opción 3", "Opción 4", "Opción 5", "Opción 6", "Opción 7"]
 
 # Función para crear la ruleta
 def create_wheel():
-    categories = ["Rojo", "Negro", "Verde", "Amarillo", "Azul", "Naranja", "Morado"]
+    # Crear los colores de la ruleta
+    colors = ['#FF5733', '#33FF57', '#3357FF', '#FF33A6', '#F1C40F', '#9B59B6', '#1ABC9C']
+
+    # Ángulos de cada sección
+    angles = np.linspace(0, 2 * np.pi, len(options), endpoint=False)
+    
     # Crear un gráfico circular
     fig, ax = plt.subplots(figsize=(6, 6))
-    ax.pie([1] * len(categories), labels=categories, startangle=90, counterclock=False, colors=plt.cm.Paired.colors)
-    ax.set_title("Ruleta")
-    return fig, categories
+    wedges, texts = ax.pie([1] * len(options), labels=options, startangle=90, counterclock=False, colors=colors, wedgeprops={'edgecolor': 'black'})
+
+    ax.set_title("Ruleta de Opciones")
+    return fig, ax, wedges
 
 # Función para girar la ruleta
-def spin_wheel(categories):
-    return random.choice(categories)
+def spin_wheel():
+    return random.choice(options)
 
-# Función para obtener una pregunta aleatoria
-def get_random_question():
-    return random.choice(questions)
+# Función para animar la ruleta
+def animate_wheel(ax, wedges, options, spins=10):
+    def update(frame):
+        ax.clear()
+        # Girar la ruleta
+        angle = frame * (360 / len(options))
+        fig, ax, wedges = create_wheel()
+        ax.set_title("Ruleta de Opciones")
+        return wedges,
+    
+    ani = FuncAnimation(fig, update, frames=np.arange(0, spins), interval=100, blit=True)
+    return ani
 
 # Título de la aplicación
-st.title('Ruleta de Colores y Concurso')
+st.title('Ruleta Interactiva')
 
 # Crear la ruleta
-fig, categories = create_wheel()
+fig, ax, wedges = create_wheel()
 st.pyplot(fig)
 
 # Girar la ruleta
-spin_result = None
 if st.button('Girar la ruleta'):
-    spin_result = spin_wheel(categories)
+    spin_result = spin_wheel()
     st.subheader(f'La ruleta ha caído en: {spin_result}')
 
-    # Después de que la ruleta se detiene, mostrar la opción de concursar
-    if spin_result == "Verde":  # Puedes modificar esta condición para otro color o cualquier otro criterio
-        st.success('¡Felicidades! Ahora, tienes la oportunidad de concursar.')
-
-        # Botón para concursar
-        if st.button('Concursar'):
-            # Mostrar una pregunta aleatoria
-            question = get_random_question()
-            st.subheader(f'Pregunta: {question}')
-            
-            # Opción para responder
-            user_answer = st.text_input('Tu respuesta:')
-            if user_answer:
-                st.write(f'¡Gracias por tu respuesta! Tu respuesta fue: {user_answer}')
+    # Mostrar la animación de giro
+    ani = animate_wheel(ax, wedges, options, spins=30)
+    st.pyplot(fig)
